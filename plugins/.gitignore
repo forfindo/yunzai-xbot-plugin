@@ -3,6 +3,7 @@
 
 !genshin
 !genshin/**
+!miao-plugin
 genshin/config/*
 
 !system

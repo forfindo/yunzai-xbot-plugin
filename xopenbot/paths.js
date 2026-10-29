@@ -18,8 +18,6 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 export const projectRoot = path.resolve(here, "..")
 export const pluginsRoot = path.join(projectRoot, "plugins")
 export const miaoLink = path.join(pluginsRoot, "miao-plugin")
-export const tempRoot = path.join(projectRoot, "temp")
-export const storeFile = path.join(projectRoot, "data", "miao-plugin", "store.json")
 
 function isMiaoRoot(dir) {
   if (!dir) return false

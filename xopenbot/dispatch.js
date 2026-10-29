@@ -15,7 +15,6 @@ import { setActiveContext } from "./globals.js"
 import { collectedParts } from "./message.js"
 import { prepareHost } from "./host.js"
 import { setActiveUser } from "./runtime.js"
-import store from "./store.js"
 
 const srReg = /^#?(\*|星铁|星轨|穹轨|星穹|崩铁|星穹铁道|崩坏星穹铁道|铁道)+/
 const zzzReg = /^#?(%|％|绝区零|绝区)+/
@@ -366,7 +365,6 @@ export function createDispatch(priority) {
       } catch (error) {
         log().error?.("[miao-yunzai] 消息发送失败", error)
       }
-      await store.flush()
     }
 
     const content = collectedParts(e)

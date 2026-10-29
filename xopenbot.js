@@ -24,6 +24,25 @@ const plugin = {
   init() {
     return boot.apis
   },
+  getScheduleTask() {
+    const log = globalThis.logger || console
+    return (boot.tasks || []).map(task => ({
+      name: task.name,
+      cron: task.cron,
+      task: async () => {
+        try {
+          if (task.log === true) log.mark?.(`开始定时任务：${task.name}`)
+          await task.fnc()
+          if (task.log === true) log.mark?.(`定时任务完成：${task.name}`)
+          return true
+        } catch (error) {
+          log.error?.(`定时任务报错：${task.name}`)
+          log.error?.(error)
+          return false
+        }
+      },
+    }))
+  },
 }
 
 export default plugin

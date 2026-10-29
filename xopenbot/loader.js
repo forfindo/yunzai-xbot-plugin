@@ -65,12 +65,13 @@ async function loadFile(file) {
   } catch (error) {
     log().error?.(`加载插件错误：${log().red?.(file.name) ?? file.name}`)
     log().error?.(error?.stack || error)
-    return []
+    return { plugins: [], tasks: [] }
   }
 
   if (app?.apps) app = { ...app.apps }
 
   const plugins = []
+  const tasks = []
   for (const entry of Object.values(app || {})) {
     if (!entry?.prototype) continue
     try {
@@ -82,32 +83,39 @@ async function loadFile(file) {
         name: instance.name || entry.name || file.name,
         priority: Number.isFinite(instance.priority) ? instance.priority : DEFAULT_PRIORITY,
       })
+      for (const task of Array.isArray(instance.task) ? instance.task : [instance.task]) {
+        if (task?.cron && task?.name && typeof task?.fnc === "function") tasks.push(task)
+      }
     } catch (error) {
       log().error?.(`加载插件错误：${log().red?.(file.name) ?? file.name}`)
       log().error?.(error?.stack || error)
     }
   }
-  return plugins
+  return { plugins, tasks }
 }
 
 /**
- * @returns {Promise<{priority: Array, files: number, count: number}>}
+ * @returns {Promise<{priority: Array, tasks: Array, files: number, count: number}>}
  */
 export async function loadPlugins() {
   const files = await collectFiles()
   const priority = []
+  const tasks = []
 
   log().info?.("-----------")
   log().info?.("加载插件中...")
 
   for (const file of files) {
-    priority.push(...(await loadFile(file)))
+    const { plugins, tasks: fileTasks } = await loadFile(file)
+    priority.push(...plugins)
+    tasks.push(...fileTasks)
   }
 
   priority.sort((a, b) => a.priority - b.priority)
 
   log().info?.(`加载插件[${priority.length}个]`)
-  return { priority, files: files.length, count: priority.length }
+  log().info?.(`加载定时任务[${tasks.length}个]`)
+  return { priority, files: files.length, count: priority.length, tasks }
 }
 
 export { projectRoot }

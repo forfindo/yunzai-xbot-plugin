@@ -1,0 +1,3 @@
+[submodule "plugins/miao-plugin"]
+	path = plugins/miao-plugin
+	url = https://github.com/yoimiya-kokomi/miao-plugin.git

@@ -2,7 +2,6 @@
  * Yunzai 存量代码直接使用全局变量：logger / redis / segment / Bot。
  * 这里补齐这些全局对象；宿主或其它插件已经提供时保留已有实现。
  */
-import store from "./store.js"
 import { forwardPart } from "./message.js"
 
 let activeCtx = null
@@ -196,7 +195,6 @@ function installBot() {
 
 export function installGlobals() {
   installLogger()
-  if (!globalThis.redis) globalThis.redis = store
   installSegment()
   installBot()
   return {
@@ -213,14 +211,8 @@ export function setActiveContext(ctx) {
     const uin = Number(ctx.selfId)
     globalThis.Bot.uin = Number.isFinite(uin) ? uin : ctx.selfId
   }
-  if (ctx?.host?.redis && !globalThis.__xopenbotRedisFromHost) {
-    globalThis.redis = ctx.host.redis
-    globalThis.__xopenbotRedisFromHost = true
-  }
 }
 
 export function getActiveContext() {
   return activeCtx
 }
-
-export { store }

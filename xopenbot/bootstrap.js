@@ -2,10 +2,11 @@
  * 初始化顺序很重要：
  *
  * 1. 切换 cwd 到项目根目录（Yunzai 大量使用相对路径）
- * 2. 补齐 logger / redis / segment / Bot
+ * 2. 补齐 logger / segment / Bot
  * 3. 在加载 #miao 之前重定向 Data.getRoot 等读写方法
  * 4. 设置 global.plugin（Yunzai 插件基类）
- * 5. 加载渲染后端、plugins/**、以及宿主能力
+ * 5. 初始化项目自带的 Redis（redisInit 设置 global.redis）
+ * 6. 加载渲染后端、plugins/**、以及宿主能力
  *
  * 本文件只静态引用 node 内置模块，其它模块全部动态 import，
  * 保证 globals / Data patch 在它们求值之前完成。
@@ -82,11 +83,15 @@ export async function bootstrap() {
   // 确保配置文件 / 目录初始化完成
   await import("../lib/config/config.js")
 
+  // 复用项目自带的 Redis：与独立运行时一致，命令层直接使用 global.redis
+  const { default: redisInit } = await import("../lib/config/redis.js")
+  await redisInit()
+
   const { configureRuntime, createInitApis } = await import("./runtime.js")
   await setupRenderer(configureRuntime)
 
   const { loadPlugins } = await import("./loader.js")
-  const { priority } = await loadPlugins()
+  const { priority, tasks } = await loadPlugins()
 
   const { createDispatch } = await import("./dispatch.js")
   const dispatch = createDispatch(priority)
@@ -96,7 +101,7 @@ export async function bootstrap() {
     name: "miao-yunzai",
     // 空匹配，实际命令由 Yunzai loader 语义在 dispatch 中匹配
     pattern: /(?:)/,
-    // 早于 miao-plugin（9999）执行；未命中时返回 next 交给后续插件
+    // 晚于 miao-plugin（9999）执行；未命中时返回 next 交给后续插件
     priority: 9000,
     execute: (input, ctx) => dispatch(ctx?.raw_message ?? input, ctx),
   }
@@ -110,5 +115,6 @@ export async function bootstrap() {
       description: "Yunzai 插件适配：加载 plugins/** 下的全部命令",
     },
     priority,
+    tasks,
   }
 }
