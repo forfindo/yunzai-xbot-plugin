@@ -2,12 +2,10 @@
  * 路径约定
  *
  * projectRoot：Yunzai 项目根目录（本插件所在仓库）
- * miaoRoot：miao-plugin 目录。优先使用已经存在的 plugins/miao-plugin，
- *           否则使用 MIAO_PLUGIN_DIR，再否则使用同级目录 ../miao-xbot-plugin。
+ * miaoRoot：miao-plugin 目录，即 plugins/miao-plugin（git submodule）。
  *
  * Yunzai 的插件通过 package.json imports（#miao / #miao.models）引用
- * miao-plugin，所以 plugins/miao-plugin 必须可解析。目录不存在时这里会
- * 自动创建 junction / symlink 指向 miao-plugin，不会复制任何文件。
+ * miao-plugin，所以 plugins/miao-plugin 必须存在，先 git submodule update --init。
  */
 import fs from "node:fs"
 import path from "node:path"
@@ -22,10 +20,7 @@ export const miaoLink = path.join(pluginsRoot, "miao-plugin")
 function isMiaoRoot(dir) {
   if (!dir) return false
   try {
-    return (
-      fs.existsSync(path.join(dir, "components", "Data.js")) &&
-      fs.existsSync(path.join(dir, "xopenbot.js"))
-    )
+    return fs.existsSync(path.join(dir, "components", "Data.js"))
   } catch {
     return false
   }
@@ -43,32 +38,24 @@ export function chdirProjectRoot() {
 }
 
 /**
- * 确保 plugins/miao-plugin 存在并返回 miao-plugin 的真实目录。
+ * 返回 plugins/miao-plugin 的真实目录。
+ * miao-plugin 是 git submodule，直接存在于 plugins/ 下。
  */
 export function resolveMiaoRoot() {
+  let real
   try {
-    const real = fs.realpathSync(miaoLink)
-    if (isMiaoRoot(real)) return real
-    throw new Error(`plugins/miao-plugin 已存在，但不是 miao-plugin 目录：${real}`)
+    real = fs.realpathSync(miaoLink)
   } catch (error) {
-    if (error?.code !== "ENOENT") throw error
+    if (error?.code === "ENOENT") {
+      throw new Error("plugins/miao-plugin 不存在，请先执行 git submodule update --init")
+    }
+    throw error
   }
 
-  const candidates = []
-  if (process.env.MIAO_PLUGIN_DIR) candidates.push(path.resolve(process.env.MIAO_PLUGIN_DIR))
-  candidates.push(path.resolve(projectRoot, "..", "miao-xbot-plugin"))
-
-  const target = candidates.find(isMiaoRoot)
-  if (!target) {
-    throw new Error(
-      "未找到 miao-plugin。请将 miao-xbot-plugin 放在本项目的同级目录，" +
-        "或设置环境变量 MIAO_PLUGIN_DIR 指向 miao-plugin 目录。",
-    )
+  if (!isMiaoRoot(real)) {
+    throw new Error(`plugins/miao-plugin 不是有效的 miao-plugin 目录：${real}`)
   }
-
-  fs.mkdirSync(pluginsRoot, { recursive: true })
-  fs.symlinkSync(target, miaoLink, process.platform === "win32" ? "junction" : "dir")
-  return fs.realpathSync(miaoLink)
+  return real
 }
 
 export const miaoRoot = resolveMiaoRoot()

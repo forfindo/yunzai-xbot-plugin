@@ -1,48 +1,62 @@
-/**
- * Miao-Yunzai 的 @xopenbot/plugin 适配入口。
- *
- * 加载 plugins/** 下的全部 Yunzai 插件，并通过 init() 向同一 Workspace
- * 中的 miao-plugin 提供宿主能力（渲染、米游社账号体系等）。
- *
- * 使用方式（宿主侧）：
- *   import YunzaiPlugin from 'file:///.../yunzai-xbot-plugin/xopenbot.js'
- *   import MiaoPlugin from 'file:///.../miao-xbot-plugin/xopenbot.js'
- *   Workspace.registry([YunzaiPlugin, MiaoPlugin])
- *
- * 注意：导入本模块会把 process.cwd() 切换到 Yunzai 项目根目录，
- * 因为 Yunzai 的配置、插件、模板都使用相对路径。
- */
-import { bootstrap } from "./xopenbot/bootstrap.js"
+import fs from "node:fs"
+import path from "node:path"
+import { chdirProjectRoot, projectRoot, miaoRoot } from "./xopenbot/paths.js"
 
-const boot = await bootstrap()
+chdirProjectRoot()
+
+const pkg = readPackage()
+
+function readPackage() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(projectRoot, "package.json"), "utf8"))
+  } catch {
+    return { name: "miao-yunzai", version: "unknown" }
+  }
+}
 
 const plugin = {
-  info: boot.info,
-  load() {
-    return [boot.command]
+  info: {
+    name: "miao-yunzai",
+    version: pkg.version || "unknown",
+    description: "Yunzai 插件适配：加载 plugins/** 下的全部命令",
   },
-  init() {
-    return boot.apis
+  async init({bot}) {
+    // 初始化配置
+    await import("./xopenbot/init.js");
+    const {default: cfg} = await import("./lib/config/config.js");
+    bot[bot.uin] = bot;
+    globalThis.Bot = bot;
+    const {default: plugins} = await import("./lib/plugins/loader.js");
+    const originGetPlugins = plugins.getPlugins.bind(plugins);
+    plugins.getPlugins = async function () {
+      const ret = await originGetPlugins();
+      return ret.filter(item => ![
+        'example/进群退群通知.js',
+        'other/restart.js',
+        'other/update.js',
+        'system/disablePrivate.js',
+        'system/friend.js',
+        'system/invite.js',
+        'system/quit.js',
+        'system/status.js'
+      ].includes(item.name))
+    }
+    await plugins.load();
   },
-  getScheduleTask() {
-    const log = globalThis.logger || console
-    return (boot.tasks || []).map(task => ({
-      name: task.name,
-      cron: task.cron,
-      task: async () => {
-        try {
-          if (task.log === true) log.mark?.(`开始定时任务：${task.name}`)
-          await task.fnc()
-          if (task.log === true) log.mark?.(`定时任务完成：${task.name}`)
-          return true
-        } catch (error) {
-          log.error?.(`定时任务报错：${task.name}`)
-          log.error?.(error)
-          return false
-        }
-      },
-    }))
-  },
+  async loadCommand() {
+    const {default: plugins} = await import("./lib/plugins/loader.js");
+    return [
+      {
+        name: "miao-yunzai",
+        // 空匹配，实际命令由 Yunzai loader 语义在 deal 中匹配
+        pattern: /(?:)/,
+        priority: 9000,
+        execute: async (input, ctx) => await plugins.deal({
+          ...ctx
+        })
+      }
+    ]
+  }
 }
 
 export default plugin

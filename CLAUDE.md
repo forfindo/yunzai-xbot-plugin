@@ -28,13 +28,13 @@ Miao-Yunzai（Yunzai 的 fork）QQ 群机器人。`xopenbot/` 是把它的命令
 
 改其中一个不会自动同步到另一个。涉及 `plugin.task` 收集、`plugin.handler` 注册这类能力时，两套都要看。
 
-## 4. plugins/miao-plugin 是 junction，不是真目录
+## 4. plugins/miao-plugin 是 git submodule（真实目录）
 
-由 `xopenbot/paths.js` 的 `resolveMiaoRoot()` 自动建，指向同级 `../miao-xbot-plugin`（可用 `MIAO_PLUGIN_DIR` 覆盖）。
-因为 `package.json` 的 `#miao` / `#miao.models` imports 写死 `./plugins/miao-plugin/...`，Yunzai 存量代码（如 `lib/plugins/runtime.js`）依赖它。
+`plugins/miao-plugin` 是 git submodule（上游 `yoimiya-kokomi/miao-plugin`），不是 junction，用 `git submodule update --init` 初始化。
+`package.json` 的 `#miao` / `#miao.models` imports 写死 `./plugins/miao-plugin/...`，Yunzai 存量代码（如 `lib/plugins/runtime.js`）依赖它。
 
-- 别往里复制文件，也别当普通目录删（删了下次 import 会重建）。
-- `xopenbot/loader.js` 会**跳过** `miao-plugin`，它的命令由兄弟仓库 `miao-xbot-plugin` 自己的 `xopenbot.js` 注册——要它生效，宿主得同时注册两个插件。
+- 别往里复制文件；它是 submodule，改动进它自己的 git 仓库。
+- `xopenbot/loader.js` **正常加载** `miao-plugin`（走 `index.js` → `apps/index.js` 导出的 `apps`，其 `v3App()` 返回 `plugin` 子类），不再 skip，也没有兄弟仓库 `miao-xbot-plugin` 了。
 
 ## 5. 扩展点状态：定时任务已接，handler 未接
 

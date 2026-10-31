@@ -7,8 +7,6 @@
  * - 导出对象中的每个 class 都会被实例化，读取 name / priority
  * - 插件 init() 返回 'return' 时跳过
  *
- * plugins/miao-plugin 由 miao-plugin 自己的 @xopenbot/plugin 入口负责，
- * 这里必须跳过，否则 miao 的命令会被注册两次。
  */
 import fs from "node:fs/promises"
 import path from "node:path"
@@ -36,7 +34,6 @@ async function collectFiles() {
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue
-    if (entry.name === "miao-plugin") continue
 
     const dir = path.join(pluginsRoot, entry.name)
     const index = path.join(dir, "index.js")
