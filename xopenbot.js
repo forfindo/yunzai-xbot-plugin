@@ -50,7 +50,7 @@ const plugin = {
         name: "miao-yunzai",
         // 空匹配，实际命令由 Yunzai loader 语义在 deal 中匹配
         pattern: /(?:)/,
-        priority: 9000,
+        priority: 100,
         execute: async (input, ctx) => await plugins.deal({
           ...ctx
         })
