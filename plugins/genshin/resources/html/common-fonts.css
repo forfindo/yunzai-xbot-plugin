@@ -1,0 +1,83 @@
+/* genshin 插件公共字体补丁
+ * 目的：让图片里的中文只依赖插件自带的字体文件，不依赖渲染宿主机是否装了中文字体。
+ * 被 html/layout/*.html 与各独立页面模板统一引入，必须排在各页面自身的 css 之前。
+ */
+
+/* 1. 自带中文字体（历史页面里出现过 YS / HYWenHei-55W 两个别名，一并注册） */
+@font-face {
+  font-family: "HYWenHei";
+  src: url("../font/HYWenHei-55W.ttf");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "HYWenHei-55W";
+  src: url("../font/HYWenHei-55W.ttf");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "YS";
+  src: url("../font/HYWenHei-55W.ttf");
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* 2. 给数字字体补一个中文面
+ * 同一族名用两段 unicode-range：数字/拉丁仍走 tttgbnumber.ttf，
+ * 汉字与全角标点走 HYWenHei，这样所有已写 font-family:"tttgbnumber" 的规则
+ * （各页 .num、ledger-gs / daily-note-gs / role-card 的 body 等）无需改动即可显示中文。
+ */
+@font-face {
+  font-family: "tttgbnumber";
+  src: url("../font/tttgbnumber.ttf");
+  unicode-range: U+0000-02FF;
+}
+@font-face {
+  font-family: "tttgbnumber";
+  src: url("../font/HYWenHei-55W.ttf");
+  unicode-range: U+2000-206F, U+2E80-9FFF, U+F900-FAFF, U+FE10-FE4F, U+FF00-FFEF;
+}
+@font-face {
+  font-family: "Number";
+  src: url("../font/tttgbnumber.ttf");
+  unicode-range: U+0000-02FF;
+}
+@font-face {
+  font-family: "Number";
+  src: url("../font/HYWenHei-55W.ttf");
+  unicode-range: U+2000-206F, U+2E80-9FFF, U+F900-FAFF, U+FE10-FE4F, U+FF00-FFEF;
+}
+
+/* 3. 系统字体名别名
+ * 多个页面把 font-family 写死成 macOS / Windows 专有字体（PingFang、汉仪文黑等），
+ * 在 Linux 宿主上不存在，解析结果不可控。这里把这些名字直接指向自带字体。
+ */
+@font-face {
+  font-family: "PingFang SC";
+  src: url("../font/HYWenHei-55W.ttf");
+  font-weight: 400;
+}
+@font-face {
+  font-family: "PingFangSC-Medium";
+  src: url("../font/HYWenHei-55W.ttf");
+  font-weight: 400;
+}
+@font-face {
+  font-family: "Microsoft YaHei";
+  src: url("../font/HYWenHei-55W.ttf");
+  font-weight: 400;
+}
+@font-face {
+  font-family: "汉仪文黑-65W";
+  src: url("../font/HYWenHei-55W.ttf");
+  font-weight: 400;
+}
+
+/* 4. 兜底：所有没有自己声明字体的元素
+ * 优先级 (0,0,1)，页面里具体的类选择器（.num 等）仍会覆盖它，不影响原有排版。
+ */
+body,
+body * {
+  font-family: "HYWenHei", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+}
