@@ -12,7 +12,9 @@
 }
 body {
   font-size: 16px;
-  font-family: "tttgbnumber";
+  /* tttgbnumber 只有数字字形，中文必须落到自带黑体（YS 由 miao 公共样式注册），
+     否则中文会依赖渲染机的系统字体，在没装中文字体的环境下显示为方块 */
+  font-family: "tttgbnumber", "YS", "Noto Sans CJK SC", sans-serif;
   transform: scale(1.5);
   transform-origin: 0 0;
   color: #1e1f20;
