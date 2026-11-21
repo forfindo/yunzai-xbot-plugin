@@ -1,0 +1,14 @@
+plugins/miao-plugin
+  h_7037025082b470 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "5a936d212dd8649d5e20d7846f8c19f1a9a7d4e8",
+  "prompts": {},
+  "humans": {
+    "h_7037025082b470": {
+      "author": "forfindo <3530766280@qq.com>"
+    }
+  }
+}
